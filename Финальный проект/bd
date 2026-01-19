@@ -1,0 +1,158 @@
+-- Таблица: Художники
+CREATE TABLE Artists (
+    artist_id INT IDENTITY(1,1) PRIMARY KEY,
+    email NVARCHAR(100) UNIQUE NOT NULL,
+    name NVARCHAR(100) NOT NULL,
+    cost_of_work DECIMAL(10,2) NOT NULL
+);
+GO
+
+-- Таблица: Клиенты
+CREATE TABLE Clients (
+    client_id INT IDENTITY(1,1) PRIMARY KEY,
+    phone NVARCHAR(20) NOT NULL,
+    name NVARCHAR(100) NOT NULL,
+    email NVARCHAR(100) UNIQUE
+);
+GO
+
+-- Таблица: Материалы (основная таблица материалов)
+CREATE TABLE Materials (
+    material_id INT IDENTITY(1,1) PRIMARY KEY,
+    price DECIMAL(10,2) NOT NULL,
+    name NVARCHAR(100) NOT NULL
+);
+GO
+
+-- Таблица: Дизайны
+CREATE TABLE Designs (
+    design_id INT IDENTITY(1,1) PRIMARY KEY,
+    image VARBINARY(MAX),
+    name NVARCHAR(100) NOT NULL,
+    artist_id INT NOT NULL,
+    
+    CONSTRAINT FK_Designs_Artists FOREIGN KEY (artist_id) 
+        REFERENCES Artists(artist_id) ON DELETE CASCADE
+);
+GO
+
+-- Таблица: Сеансы 
+CREATE TABLE Sessions (
+    session_id INT IDENTITY(1,1) PRIMARY KEY,
+    status NVARCHAR(50) NOT NULL CHECK (status IN ('Запланирован', 'В процессе', 'Завершен', 'Отменен')),
+    client_id INT NOT NULL,
+    tattoo_id INT NOT NULL,
+    session_date DATETIME NOT NULL,
+    
+    CONSTRAINT FK_Sessions_Clients FOREIGN KEY (client_id) 
+        REFERENCES Clients(client_id) ON DELETE CASCADE,
+
+);
+GO
+
+-- Таблица: Татуировки
+CREATE TABLE Tattoos (
+    tattoo_id INT IDENTITY(1,1) PRIMARY KEY,
+    session_id INT NOT NULL,
+    client_id INT NOT NULL,
+    artist_id INT NOT NULL,
+    design_id INT,
+    body_part NVARCHAR(100) NOT NULL,
+    cost_of_work DECIMAL(10,2) NOT NULL,
+    tattoo_cost DECIMAL(10,2) NOT NULL,
+    
+    CONSTRAINT FK_Tattoos_Sessions FOREIGN KEY (session_id) 
+        REFERENCES Sessions(session_id) ON DELETE CASCADE,
+    CONSTRAINT FK_Tattoos_Clients FOREIGN KEY (client_id) 
+        REFERENCES Clients(client_id) ON DELETE CASCADE,
+    CONSTRAINT FK_Tattoos_Artists FOREIGN KEY (artist_id) 
+        REFERENCES Artists(artist_id) ON DELETE CASCADE,
+    CONSTRAINT FK_Tattoos_Designs FOREIGN KEY (design_id) 
+        REFERENCES Designs(design_id) ON SET NULL
+);
+GO
+
+-- Таблица: Материалы_Татуировки 
+CREATE TABLE TattooMaterials (
+    material_id INT NOT NULL,
+    tattoo_id INT NOT NULL,
+    price DECIMAL(10,2) NOT NULL,
+    quantity INT DEFAULT 1,
+    
+    CONSTRAINT PK_TattooMaterials PRIMARY KEY (material_id, tattoo_id),
+    CONSTRAINT FK_TattooMaterials_Materials FOREIGN KEY (material_id) 
+        REFERENCES Materials(material_id) ON DELETE CASCADE,
+    CONSTRAINT FK_TattooMaterials_Tattoos FOREIGN KEY (tattoo_id) 
+        REFERENCES Tattoos(tattoo_id) ON DELETE CASCADE
+);
+GO
+
+-- Теперь добавляем внешний ключ в Sessions на Tattoos
+ALTER TABLE Sessions
+ADD CONSTRAINT FK_Sessions_Tattoos FOREIGN KEY (tattoo_id) 
+    REFERENCES Tattoos(tattoo_id) ON DELETE CASCADE;
+GO
+
+-- Заполнение таблицы Художники
+INSERT INTO Artists (email, name, cost_of_work) VALUES 
+('maria.tattoo@studio.ru', 'Мария Федорова', 58043.81),
+('dmitry.tattoo@studio.ru', 'Дмитрий Петров', 31272.93),
+('tatiana.tattoo@studio.ru', 'Татьяна Иванова', 43359.38),
+('anna.tattoo@studio.ru', 'Анна Смирнова', 97829.64),
+('olga.tattoo@studio.ru', 'Ольга Сидорова', 83209.10);
+
+-- Заполнение таблицы Клиенты
+INSERT INTO Clients (phone, name, email) VALUES 
+('+79684590831', 'Анна Кузнецова', 'аннакузнецова@bk.ru'),
+('+72424900347', 'Алексей Петров', 'алексейпетров@yandex.ru'),
+('+74640318663', 'Николай Попов', 'николайпопов@gmail.com'),
+('+78946061860', 'Мария Смирнова', 'мариясидорова@mail.ru'),
+('+77639334101', 'Татьяна Иванова', 'татьянаиванова@gmail.com'),
+('+73299891606', 'Дмитрий Морозов', 'дмитрийморозов@bk.ru');
+
+-- Заполнение таблицы Материалы
+INSERT INTO Materials (price, name) VALUES 
+(563.82, 'Vichy Бальзам'),
+(1610.51, 'La Roche-Posay Сыворотка'),
+(1994.01, 'Bioderma Шампунь'),
+(2276.02, 'Estée Lauder Гель'),
+(2263.85, 'Nivea Сыворотка'),
+(501.66, 'La Roche-Posay Гель');
+
+-- Заполнение таблицы Дизайны
+INSERT INTO Designs (image, name, artist_id) VALUES 
+(NULL, 'Дракон и сакура', 2),
+(NULL, 'Геометрический волк', 4),
+(NULL, 'Акварельная роза', 3),
+(NULL, 'Портрет кошки', 1),
+(NULL, 'Мандала солнца', 4),
+(NULL, 'Минималистичная луна', 5);
+
+-- Сначала создаем татуировки
+INSERT INTO Tattoos (session_id, client_id, artist_id, design_id, body_part, cost_of_work, tattoo_cost) VALUES 
+(1, 1, 1, 4, 'Предплечье левое', 58043.81, 60000.00),
+(2, 2, 2, 1, 'Грудь', 31272.93, 35000.00),
+(3, 3, 3, 3, 'Запястье правое', 43359.38, 45000.00),
+(4, 4, 4, 5, 'Лопатка', 97829.64, 100000.00),
+(5, 5, 5, 6, 'Шея сзади', 83209.10, 85000.00),
+(6, 6, 1, 2, 'Спина', 58043.81, 70000.00);
+
+-- Затем создаем сеансы
+INSERT INTO Sessions (status, client_id, tattoo_id, session_date) VALUES 
+('Запланирован', 1, 1, '2026-01-17 07:05:39'),
+('Выполнен', 2, 2, '2026-01-16 05:05:39'),
+('Выполнен', 3, 3, '2026-01-02 04:35:39'),
+('Отменен', 4, 4, '2026-01-19 07:05:39'),
+('Отменен', 5, 5, '2026-01-04 01:50:39'),
+('Запланирован', 6, 6, '2026-01-10 06:35:39');
+
+-- Заполнение таблицы Материалы_Татуировки
+INSERT INTO TattooMaterials (material_id, tattoo_id, price, quantity) VALUES 
+(1, 1, 563.82, 2),
+(2, 1, 1610.51, 1),
+(3, 2, 1994.01, 1),
+(4, 3, 2276.02, 3),
+(5, 4, 2263.85, 2),
+(6, 5, 501.66, 4),
+(1, 6, 563.82, 3),
+(2, 6, 1610.51, 2);
