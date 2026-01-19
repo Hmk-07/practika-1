@@ -1,0 +1,136 @@
+-- Таблица: Клиенты
+CREATE TABLE Clients (
+    UniqueID INT IDENTITY(1,1) PRIMARY KEY,
+    Client_id UNIQUEIDENTIFIER DEFAULT NEWID() NOT NULL UNIQUE,
+    name NVARCHAR(100) NOT NULL,
+    email NVARCHAR(100) UNIQUE,
+    phone NVARCHAR(20),
+    notes NVARCHAR(MAX)
+);
+
+
+-- Таблица: Художники
+CREATE TABLE Artists (
+    UniqueID INT IDENTITY(1,1) PRIMARY KEY,
+    artist_id UNIQUEIDENTIFIER DEFAULT NEWID() NOT NULL UNIQUE,
+    name NVARCHAR(100) NOT NULL,
+    phone NVARCHAR(20),
+    email NVARCHAR(100) UNIQUE,
+    notes NVARCHAR(MAX)
+);
+
+
+-- Таблица: Сеансы
+CREATE TABLE Sessions (
+    UniqueID INT IDENTITY(1,1) PRIMARY KEY,
+    session_id UNIQUEIDENTIFIER DEFAULT NEWID() NOT NULL UNIQUE,
+    client_id UNIQUEIDENTIFIER NOT NULL,
+    artist_id UNIQUEIDENTIFIER NOT NULL,
+    session_date DATETIME NOT NULL,
+    status NVARCHAR(50) NOT NULL CHECK (status IN ('Запланирован', 'В процессе', 'Завершен', 'Отменен')),
+    
+    CONSTRAINT FK_Sessions_Clients FOREIGN KEY (client_id) 
+        REFERENCES Clients(Client_id) ON DELETE CASCADE,
+    CONSTRAINT FK_Sessions_Artists FOREIGN KEY (artist_id) 
+        REFERENCES Artists(artist_id) ON DELETE CASCADE
+);
+
+
+-- Таблица: Дизайны
+CREATE TABLE Designs (
+    UniqueID INT IDENTITY(1,1) PRIMARY KEY,
+    design_id UNIQUEIDENTIFIER DEFAULT NEWID() NOT NULL UNIQUE,
+    name NVARCHAR(100) NOT NULL,
+    style NVARCHAR(50),
+    artist_id UNIQUEIDENTIFIER NOT NULL,
+    image VARBINARY(MAX),
+    
+    CONSTRAINT FK_Designs_Artists FOREIGN KEY (artist_id) 
+        REFERENCES Artists(artist_id) ON DELETE CASCADE
+);
+
+
+-- Таблица: Материалы
+CREATE TABLE Materials (
+    UniqueID INT IDENTITY(1,1) PRIMARY KEY,
+    material_id UNIQUEIDENTIFIER DEFAULT NEWID() NOT NULL UNIQUE,
+    name NVARCHAR(100) NOT NULL,
+    session_id UNIQUEIDENTIFIER NOT NULL,
+    
+    CONSTRAINT FK_Materials_Sessions FOREIGN KEY (session_id) 
+        REFERENCES Sessions(session_id) ON DELETE CASCADE
+);
+
+
+-- Таблица: Татуировки
+CREATE TABLE Tattoos (
+    UniqueID INT IDENTITY(1,1) PRIMARY KEY,
+    tattoo_id UNIQUEIDENTIFIER DEFAULT NEWID() NOT NULL UNIQUE,
+    client_id UNIQUEIDENTIFIER NOT NULL,
+    artist_id UNIQUEIDENTIFIER NOT NULL,
+    design_id UNIQUEIDENTIFIER,
+    body_part NVARCHAR(100) NOT NULL,
+    session_id UNIQUEIDENTIFIER NOT NULL,
+    
+    CONSTRAINT FK_Tattoos_Clients FOREIGN KEY (client_id) 
+        REFERENCES Clients(Client_id) ON DELETE CASCADE,
+    CONSTRAINT FK_Tattoos_Artists FOREIGN KEY (artist_id) 
+        REFERENCES Artists(artist_id) ON DELETE CASCADE,
+    CONSTRAINT FK_Tattoos_Designs FOREIGN KEY (design_id) 
+        REFERENCES Designs(design_id) ON SET NULL,
+    CONSTRAINT FK_Tattoos_Sessions FOREIGN KEY (session_id) 
+        REFERENCES Sessions(session_id) ON DELETE CASCADE
+);
+
+-- Заполнение таблицы Клиенты
+INSERT INTO Clients (Client_id, name, phone, email, notes) VALUES 
+('C1', 'Анна Кузнецова', '+79684590831', 'аннакузнецова@bk.ru', 'Хочет тату на предплечье'),
+('C2', 'Алексей Петров', '+72424900347', 'алексейпетров@yandex.ru', 'Боится боли, нужен деликатный подход'),
+('C3', 'Николай Попов', '+74640318663', 'николайпопов@gmail.com', 'Постоянный клиент, уже 5 тату'),
+('C4', 'Мария Смирнова', '+78946061860', 'мариясидорова@mail.ru', 'Первая татуировка, консультация'),
+('C5', 'Татьяна Иванова', '+77639334101', 'татьянаиванова@gmail.com', 'Хочет перекрыть старое тату'),
+('C6', 'Дмитрий Морозов', '+73299891606', 'дмитрийморозов@bk.ru', 'Крупный проект на спине, несколько сеансов');
+
+-- Заполнение таблицы Художники
+INSERT INTO Artists (artist_id, name, phone, email, notes) VALUES 
+('A1', 'Мария Федорова', '+79051234567', 'maria.tattoo@studio.ru', 'Специализация: реализм, черно-белое'),
+('A2', 'Дмитрий Петров', '+79052345678', 'dmitry.tattoo@studio.ru', 'Специализация: олдскул, треш-полька'),
+('A3', 'Татьяна Иванова', '+79053456789', 'tatiana.tattoo@studio.ru', 'Специализация: акварель, минимализм'),
+('A4', 'Анна Смирнова', '+79054567890', 'anna.tattoo@studio.ru', 'Специализация: орнаменты, мандалы'),
+('A5', 'Ольга Сидорова', '+79055678901', 'olga.tattoo@studio.ru', 'Специализация: лайнворк, дотворк');
+
+-- Заполнение таблицы Сеансы
+INSERT INTO Sessions (session_id, client_id, artist_id, session_date, status) VALUES 
+('S1', 'C1', 'A1', '2025-03-29 14:00:00', 'Запланирован'),
+('S2', 'C2', 'A2', '2025-12-16 11:30:00', 'Запланирован'),
+('S3', 'C3', 'A3', '2025-04-10 16:00:00', 'Запланирован'),
+('S4', 'C4', 'A4', '2025-03-17 12:00:00', 'Завершен'),
+('S5', 'C5', 'A5', '2025-06-04 15:30:00', 'В процессе'),
+('S6', 'C6', 'A1', '2025-11-11 10:00:00', 'Отменен');
+
+-- Заполнение таблицы Дизайны
+INSERT INTO Designs (design_id, name, style, artist_id, image) VALUES 
+('D1', 'Дракон и сакура', 'Японский', 'A2', NULL),
+('D2', 'Геометрический волк', 'Геометрия', 'A4', NULL),
+('D3', 'Акварельная роза', 'Акварель', 'A3', NULL),
+('D4', 'Портрет кошки', 'Реализм', 'A1', NULL),
+('D5', 'Мандала солнца', 'Орнамент', 'A4', NULL),
+('D6', 'Минималистичная луна', 'Минимализм', 'A5', NULL);
+
+-- Заполнение таблицы Материалы
+INSERT INTO Materials (material_id, name, session_id) VALUES 
+('M1', 'Иглы 3RL', 'S1'),
+('M2', 'Краска черная Dynamic', 'S1'),
+('M3', 'Иглы 9M1', 'S2'),
+('M4', 'Краска красная Eternal', 'S2'),
+('M5', 'Иглы 5RS', 'S3'),
+('M6', 'Краска синяя Fusion', 'S3');
+
+-- Заполнение таблицы Татуировки
+INSERT INTO Tattoos (tattoo_id, client_id, artist_id, design_id, body_part, session_id) VALUES 
+('T1', 'C1', 'A1', 'D4', 'Предплечье левое', 'S1'),
+('T2', 'C2', 'A2', 'D1', 'Грудь', 'S2'),
+('T3', 'C3', 'A3', 'D3', 'Запястье правое', 'S3'),
+('T4', 'C4', 'A4', 'D5', 'Лопатка', 'S4'),
+('T5', 'C5', 'A5', 'D6', 'Шея сзади', 'S5'),
+('T6', 'C6', 'A1', 'D2', 'Спина', 'S6');
